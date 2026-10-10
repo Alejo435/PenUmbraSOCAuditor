@@ -21,6 +21,8 @@ export default defineConfig({
     proxy: {
       // forwards api calls to flask so the browser never makes a cross-origin request
       '/api': 'http://localhost:5000',
+      // the backend serves replayed events outside /api, so it needs its own rule
+      '/logs': 'http://localhost:5000',
     },
   },
 })
