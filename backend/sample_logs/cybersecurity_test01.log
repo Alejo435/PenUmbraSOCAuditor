@@ -1,4 +1,4 @@
-# Synthetic cybersecurity test log
+# Synthetic cybersecurity test log (10 minutes)
 # Purpose: test log ingestion, parsing, filtering, alerting, and dashboard display.
 # All IP addresses below are reserved for documentation/examples (RFC 5737) or localhost.
 # No real credentials, users, or incidents are represented.
