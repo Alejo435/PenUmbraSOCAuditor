@@ -8,3 +8,5 @@ node_modules/
 reports/
 .DS_Storebackend/files/
 .DS_Store
+requirements.txt
+devpost.md
