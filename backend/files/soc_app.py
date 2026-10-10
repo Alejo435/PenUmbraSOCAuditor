@@ -17,8 +17,8 @@ import dash_cytoscape as cyto
 from dash import Dash, Input, Output, State, callback, ctx, dcc, html, no_update
 from flask import Flask, jsonify, request
 
-from ai_analyst import Analyst
-from backend.graph_engine import ThreatGraph
+from local_llm import LocalAnalyst as Analyst
+from graph_engine import ThreatGraph
 from log_parser import normalize_event, parse_line, parse_timestamp
 
 BASE_DIR = Path(__file__).parent

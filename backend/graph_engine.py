@@ -5,6 +5,9 @@ Each event adds/updates nodes (user, host, ip, process, file) and edges
 (relationships). Simple detection rules flag suspicious activity and raise a
 risk score. New nodes are placed near their neighbours while every existing
 node stays pinned, so the graph never reshuffles.
+
+ingest() reports which nodes were NEW and which existing nodes CHANGED, so the
+report system knows exactly which reports to (re)write.
 """
 import math
 import random
@@ -47,7 +50,10 @@ class ThreatGraph:
             self.events = []
             self.alerts = []
             self.noise_count = 0
+            self.node_order = []       # node ids in the order they first appeared
             self._seq = 0
+            self._touched = set()      # nodes seen by the event being ingested
+            self._flagged = set()      # nodes that gained a new detection this event
             self._failed_logins = {}   # ip -> {"count": int, "users": set}
             self._rate_limited = {}    # ip -> count
             self._alerted = set()      # (rule, key) pairs already alerted
@@ -56,12 +62,14 @@ class ThreatGraph:
     def _node(self, ntype, key, ts, label=None):
         nid = f"{ntype}:{key}"
         if nid not in self.G:
-            self.G.add_node(nid, type=ntype, label=label or key, first_seen=ts,
-                            last_seen=ts, count=0, risk=0, flags=[], description="",
-                            detail="")
+            self.G.add_node(nid, type=ntype, label=label or key, index=len(self.node_order),
+                            first_seen=ts, last_seen=ts, count=0, risk=0, flags=[],
+                            description="", detail="")
+            self.node_order.append(nid)
         n = self.G.nodes[nid]
         n["last_seen"] = ts
         n["count"] += 1
+        self._touched.add(nid)
         return nid
 
     def _edge(self, src, dst, relation, ts, suspicious=False, reason=""):
@@ -82,6 +90,8 @@ class ThreatGraph:
         if rule not in n["flags"]:
             n["flags"].append(rule)
             n["risk"] = min(100, n["risk"] + points)
+            self._touched.add(nid)
+            self._flagged.add(nid)
 
     def _alert(self, ev, rule, severity, message, key, targets):
         """Raise an alert once per (rule, key). targets = {node_id: risk_points}."""
@@ -95,10 +105,14 @@ class ThreatGraph:
 
     # ----------------------------------------------------------------- ingest
     def ingest(self, ev):
-        """Add one parsed event to the graph."""
+        """
+        Add one parsed event to the graph.
+        Returns {"new": [node ids, in arrival order], "changed": [existing node ids that changed]}.
+        """
         with self.lock:
             self.events.append(ev)
-            before = set(self.G.nodes)
+            known = len(self.node_order)
+            self._touched, self._flagged = set(), set()
 
             handler = getattr(self, f"_on_{ev['event']}", None)
             if handler:
@@ -106,9 +120,21 @@ class ThreatGraph:
             else:
                 self.noise_count += 1  # heartbeat, backup, logout... kept in the feed only
 
-            new_nodes = [n for n in self.G.nodes if n not in before]
+            new_nodes = self.node_order[known:]
+            new_set = set(new_nodes)
+
+            # Existing nodes that changed: anything the event touched (this includes old nodes
+            # a new node got connected to), plus the neighbours of any node that just got flagged
+            # (their report should mention the newly suspicious neighbour).
+            affected = set(self._touched)
+            for nid in self._flagged:
+                affected.update(nx.all_neighbors(self.G, nid))
+            changed = sorted((n for n in affected if n in self.G and n not in new_set),
+                             key=lambda n: self.G.nodes[n]["index"])
+
             self._place_new_nodes(new_nodes)
             self.version += 1
+            return {"new": list(new_nodes), "changed": changed}
 
     # ---- event handlers: one method per event type -------------------------
     def _on_login_success(self, ev, f):
@@ -296,7 +322,7 @@ class ThreatGraph:
 
     # --------------------------------------------------------------- read side
     def snapshot(self):
-        """Plain-dict view of everything - safe to hand to JSON, the UI, or the AI."""
+        """Plain-dict view of everything - safe to hand to JSON or the UI."""
         with self.lock:
             sus = [(d["first_seen"], d["seq"], u, v, k)
                    for u, v, k, d in self.G.edges(keys=True, data=True) if d["suspicious"]]
@@ -319,18 +345,32 @@ class ThreatGraph:
                     (e for e in edges if e["order"]), key=lambda e: e["order"])],
             }
 
+    def node_context(self, nid):
+        """Everything a report writer needs about one node: its data, its edges, its alerts."""
+        with self.lock:
+            if nid not in self.G:
+                return None
+            node = {"id": nid, **{k: (list(v) if isinstance(v, list) else v)
+                                  for k, v in self.G.nodes[nid].items()}}
+
+            def conn(direction, other, relation, d):
+                o = self.G.nodes[other]
+                return {"direction": direction, "other_id": other, "other_label": o["label"],
+                        "other_type": o["type"], "other_risk": o["risk"], "relation": relation,
+                        "count": d["count"], "suspicious": d["suspicious"], "reason": d["reason"],
+                        "last_seen": d["last_seen"]}
+
+            conns = [conn("out", v, k, d) for _, v, k, d in self.G.out_edges(nid, keys=True, data=True)]
+            conns += [conn("in", u, k, d) for u, _, k, d in self.G.in_edges(nid, keys=True, data=True)]
+            conns.sort(key=lambda c: (not c["suspicious"], -c["other_risk"], -c["count"]))
+            alerts = [dict(a) for a in self.alerts if nid in a["entities"]][-5:]
+            return {"node": node, "connections": conns, "alerts": alerts}
+
     def recent_events(self, n=15):
         with self.lock:
             return [{"timestamp": e["timestamp"], "severity": e["severity"],
                      "source": e["source"], "event": e["event"], "fields": e["fields"]}
                     for e in self.events[-n:]]
-
-    def set_descriptions(self, notes):
-        """notes = {node_id: 'AI-written description'}"""
-        with self.lock:
-            for nid, text in notes.items():
-                if nid in self.G:
-                    self.G.nodes[nid]["description"] = text
 
     def to_cytoscape(self):
         """Convert the snapshot into Cytoscape.js elements (positions included)."""
@@ -340,7 +380,7 @@ class ThreatGraph:
             x, y = self.positions.get(n["id"], (0, 0))
             elements.append({
                 "data": {"id": n["id"], "label": f"{ICONS[n['type']]} {n['label']}",
-                         "type": n["type"], "risk": n["risk"]},
+                         "type": n["type"], "risk": n["risk"], "index": n["index"]},
                 "position": {"x": x + CANVAS_OFFSET[0], "y": y + CANVAS_OFFSET[1]},
             })
         for e in snap["edges"]:

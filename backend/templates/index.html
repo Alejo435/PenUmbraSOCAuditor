@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -17,10 +16,7 @@
 
         * { box-sizing: border-box; }
 
-        body {
-            margin: 0;
-            padding: 24px;
-        }
+        body { margin: 0; padding: 24px; }
 
         header {
             display: flex;
@@ -32,17 +28,12 @@
         }
 
         h1, h2, p { margin-top: 0; }
-
         h1 { margin-bottom: 6px; }
         h2 { font-size: 18px; }
 
         .muted { color: #9ca3af; }
 
-        .controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
+        .controls { display: flex; flex-wrap: wrap; gap: 10px; }
 
         button {
             border: 0;
@@ -59,7 +50,7 @@
 
         .stats {
             display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-columns: repeat(5, minmax(0, 1fr));
             gap: 12px;
             margin-bottom: 16px;
         }
@@ -72,16 +63,14 @@
             min-width: 0;
         }
 
-        .stat .value {
-            font-size: 24px;
-            font-weight: bold;
-            margin-top: 8px;
-        }
+        .stat .value { font-size: 24px; font-weight: bold; margin-top: 8px; }
 
+        /* report panel | graph | alerts + events */
         .main-grid {
             display: grid;
-            grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+            grid-template-columns: minmax(250px, 330px) minmax(0, 1fr) minmax(250px, 330px);
             gap: 16px;
+            align-items: start;
         }
 
         #graph {
@@ -108,16 +97,9 @@
             margin-right: 5px;
         }
 
-        .side {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
+        .side { display: flex; flex-direction: column; gap: 16px; }
 
-        .feed {
-            max-height: 250px;
-            overflow-y: auto;
-        }
+        .feed { max-height: 250px; overflow-y: auto; }
 
         .event, .alert {
             border-bottom: 1px solid #374151;
@@ -156,12 +138,43 @@
             font-size: 12px;
         }
 
-        .status-line {
-            margin: 12px 0;
+        .status-line { margin: 12px 0; overflow-wrap: anywhere; }
+
+        /* ---- node report panel ---- */
+        .report-panel { min-height: 300px; }
+
+        #reportTitle { font-size: 16px; font-weight: bold; overflow-wrap: anywhere; }
+
+        #reportMeta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0; }
+
+        .pill {
+            display: inline-block;
+            border-radius: 999px;
+            padding: 2px 9px;
+            font-size: 11px;
+            font-weight: bold;
+            background: #374151;
+        }
+        .pill.ready { background: #065f46; }
+        .pill.generating, .pill.updating { background: #1e40af; }
+        .pill.queued { background: #92400e; }
+        .pill.error { background: #991b1b; }
+
+        #reportBody {
+            white-space: pre-wrap;
             overflow-wrap: anywhere;
+            background: transparent;
+            color: #e5e7eb;
+            font-family: inherit;
+            font-size: 13px;
+            line-height: 1.55;
+            padding: 0;
+            max-height: 520px;
         }
 
-        @media (max-width: 900px) {
+        #reportNote { font-size: 12px; color: #fbbf24; margin-bottom: 8px; overflow-wrap: anywhere; }
+
+        @media (max-width: 1100px) {
             .main-grid { grid-template-columns: 1fr; }
             .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             #graph { height: 450px; }
@@ -173,7 +186,7 @@
     <header>
         <div>
             <h1>Cybersecurity Threat Graph</h1>
-            <p class="muted">Live log replay and entity relationships</p>
+            <p class="muted">Live log replay, entity relationships and per-node AI reports</p>
         </div>
 
         <div class="controls">
@@ -186,7 +199,7 @@
     <section class="stats">
         <div class="stat">
             <div class="muted">Simulation clock</div>
-            <div class="value" id="clock">20:00:00</div>
+            <div class="value" id="clock">--:--:--</div>
         </div>
         <div class="stat">
             <div class="muted">Events processed</div>
@@ -200,11 +213,30 @@
             <div class="muted">Detection alerts</div>
             <div class="value" id="alertCount">0</div>
         </div>
+        <div class="stat">
+            <div class="muted">AI reports written</div>
+            <div class="value" id="reportCount">0 / 0</div>
+        </div>
     </section>
 
     <p class="status-line muted" id="status">Loading test file information...</p>
 
     <section class="main-grid">
+        <!-- LEFT: report for the clicked node -->
+        <aside class="panel report-panel">
+            <h2>Node report</h2>
+            <div id="reportTitle" class="muted">Click a node on the map to see its report.</div>
+            <div id="reportMeta"></div>
+            <div id="reportNote"></div>
+            <pre id="reportBody"></pre>
+
+            <details>
+                <summary>Raw node / connection data</summary>
+                <pre id="selection">Select a node or connection to see details.</pre>
+            </details>
+        </aside>
+
+        <!-- MIDDLE: graph -->
         <div class="panel">
             <h2>Entity relationship graph</h2>
             <div id="graph"></div>
@@ -217,25 +249,20 @@
                 <span><i class="dot" style="background:#ef4444"></i>Risk flagged</span>
             </div>
             <p class="muted" style="margin-top:12px">
-                Select a node or connection to inspect its details. Red connections
-                indicate suspicious relationships.
+                Click a node to read its report. Red connections indicate suspicious relationships.
             </p>
-            <pre id="selection">Select a node or connection to see details.</pre>
         </div>
 
+        <!-- RIGHT: alerts + events -->
         <div class="side">
             <div class="panel">
                 <h2>Detection alerts</h2>
-                <div class="feed" id="alerts">
-                    <p class="muted">No alerts yet.</p>
-                </div>
+                <div class="feed" id="alerts"><p class="muted">No alerts yet.</p></div>
             </div>
 
             <div class="panel">
                 <h2>Recent events</h2>
-                <div class="feed" id="events">
-                    <p class="muted">Waiting for replay...</p>
-                </div>
+                <div class="feed" id="events"><p class="muted">Waiting for replay...</p></div>
             </div>
         </div>
     </section>
@@ -247,19 +274,17 @@
     </details>
 
     <script>
+        const POLL_MS = 400;
+
         const graphElement = document.getElementById("graph");
         const statusElement = document.getElementById("status");
         const startButton = document.getElementById("startButton");
 
-        let previousElementIds = new Set();
         let hasFittedGraph = false;
-        let lastEventCount = 0;
-        refreshDashboard();
-        setInterval(refreshDashboard, 100);
+        let selectedIndex = null;     // arrival index of the clicked node (== index in the reports list)
 
         if (typeof cytoscape === "undefined") {
-            statusElement.textContent =
-                "Could not load Cytoscape.js. Check your internet connection.";
+            statusElement.textContent = "Could not load Cytoscape.js. Check your internet connection.";
         }
 
         const cy = cytoscape({
@@ -285,32 +310,14 @@
                         "border-color": "#9ca3af"
                     }
                 },
-                {
-                    selector: 'node[type = "user"]',
-                    style: { "background-color": "#60a5fa" }
-                },
-                {
-                    selector: 'node[type = "host"]',
-                    style: { "background-color": "#34d399" }
-                },
-                {
-                    selector: 'node[type = "ip"]',
-                    style: { "background-color": "#a78bfa" }
-                },
-                {
-                    selector: 'node[type = "process"]',
-                    style: { "background-color": "#fbbf24" }
-                },
-                {
-                    selector: 'node[type = "file"]',
-                    style: { "background-color": "#9ca3af" }
-                },
+                { selector: 'node[type = "user"]',    style: { "background-color": "#60a5fa" } },
+                { selector: 'node[type = "host"]',    style: { "background-color": "#34d399" } },
+                { selector: 'node[type = "ip"]',      style: { "background-color": "#a78bfa" } },
+                { selector: 'node[type = "process"]', style: { "background-color": "#fbbf24" } },
+                { selector: 'node[type = "file"]',    style: { "background-color": "#9ca3af" } },
                 {
                     selector: "node[risk > 0]",
-                    style: {
-                        "border-color": "#ef4444",
-                        "border-width": 4
-                    }
+                    style: { "border-color": "#ef4444", "border-width": 4 }
                 },
                 {
                     selector: "edge",
@@ -330,25 +337,43 @@
                 },
                 {
                     selector: "edge.attack",
-                    style: {
-                        "line-color": "#ef4444",
-                        "target-arrow-color": "#ef4444",
-                        "width": 3
-                    }
+                    style: { "line-color": "#ef4444", "target-arrow-color": "#ef4444", "width": 3 }
                 },
                 {
-                    selector: ".selected",
-                    style: { "overlay-opacity": 0.15 }
+                    selector: "node:selected",
+                    style: {
+                        "overlay-color": "#ffffff",
+                        "overlay-opacity": 0.2,
+                        "border-color": "#fde047",
+                        "border-width": 5
+                    }
                 }
             ],
             layout: { name: "preset" }
         });
 
-        cy.on("tap", "node, edge", function (event) {
-            document.getElementById("selection").textContent =
-                JSON.stringify(event.target.data(), null, 4);
+        // ---- selection ----------------------------------------------------
+        cy.on("tap", "node", function (event) {
+            selectedIndex = event.target.data("index");
+            showRaw(event.target.data());
+            loadReport();
         });
 
+        cy.on("tap", "edge", function (event) {
+            showRaw(event.target.data());
+        });
+
+        cy.on("tap", function (event) {
+            if (event.target === cy) {
+                clearReport();
+            }
+        });
+
+        function showRaw(data) {
+            document.getElementById("selection").textContent = JSON.stringify(data, null, 4);
+        }
+
+        // ---- api helper ---------------------------------------------------
         async function api(url, options = {}) {
             const response = await fetch(url, options);
             const data = await response.json();
@@ -360,12 +385,12 @@
             return data;
         }
 
+        // ---- controls -----------------------------------------------------
         async function startReplay() {
             try {
                 await api("/api/start", { method: "POST" });
                 statusElement.textContent = "Replay started.";
                 startButton.disabled = true;
-                await refreshDashboard();
             } catch (error) {
                 statusElement.textContent = `Error: ${error.message}`;
             }
@@ -374,13 +399,12 @@
         async function resetReplay() {
             try {
                 await api("/api/reset", { method: "POST" });
-                previousElementIds.clear();
                 hasFittedGraph = false;
-                lastEventCount = 0;
-                startButton.disabled = false;
+                clearReport();
                 document.getElementById("selection").textContent =
                     "Select a node or connection to see details.";
-                await refreshState();
+                startButton.disabled = false;
+                await refresh();
                 statusElement.textContent = "Replay reset. Ready to start.";
             } catch (error) {
                 statusElement.textContent = `Error: ${error.message}`;
@@ -390,25 +414,22 @@
         async function showParsedLogs() {
             try {
                 const data = await api("/api/logs");
-                document.getElementById("jsonOutput").textContent =
-                    JSON.stringify(data, null, 4);
+                document.getElementById("jsonOutput").textContent = JSON.stringify(data, null, 4);
             } catch (error) {
                 statusElement.textContent = `Error loading JSON: ${error.message}`;
             }
         }
 
+        // ---- graph sync ---------------------------------------------------
         function syncGraph(elements) {
             const incomingIds = new Set(elements.map(item => item.data.id));
 
-            // Remove graph elements that are no longer present.
             cy.elements().forEach(element => {
                 if (!incomingIds.has(element.id())) {
                     element.remove();
                 }
             });
 
-            // Add new elements and update existing ones without rebuilding the
-            // entire graph on every poll.
             for (const item of elements) {
                 const existing = cy.getElementById(item.data.id);
 
@@ -430,6 +451,7 @@
             }
         }
 
+        // ---- side feeds ---------------------------------------------------
         function renderAlerts(alerts) {
             const container = document.getElementById("alerts");
 
@@ -492,101 +514,129 @@
             }
         }
 
-        async function refreshState() {
+        // ---- node report panel -------------------------------------------
+        const STATUS_TEXT = {
+            queued: "Waiting for Gemma",
+            generating: "Gemma is writing...",
+            updating: "Updating",
+            ready: "Up to date",
+            error: "Gemma unavailable"
+        };
+
+        function clearReport() {
+            selectedIndex = null;
+            cy.elements().unselect();
+            const title = document.getElementById("reportTitle");
+            title.className = "muted";
+            title.textContent = "Click a node on the map to see its report.";
+            document.getElementById("reportMeta").replaceChildren();
+            document.getElementById("reportNote").textContent = "";
+            document.getElementById("reportBody").textContent = "";
+        }
+
+        function renderReport(r) {
+            const title = document.getElementById("reportTitle");
+            title.className = "";
+            title.textContent = `${r.label}  (${r.type}, node #${r.index})`;
+
+            const meta = document.getElementById("reportMeta");
+            meta.replaceChildren();
+
+            const status = document.createElement("span");
+            status.className = `pill ${r.status}`;
+            status.textContent = STATUS_TEXT[r.status] || r.status;
+
+            const source = document.createElement("span");
+            source.className = "pill";
+            source.textContent = r.source === "gemma" ? "Gemma report" : "Preliminary (rules-based)";
+
+            const info = document.createElement("span");
+            info.className = "muted";
+            info.style.fontSize = "12px";
+            info.textContent = `v${r.version} - updated ${r.updated_at}`;
+
+            meta.append(status, source, info);
+
+            let note = "";
+            if (r.status === "updating" && r.source === "gemma") {
+                note = "New activity arrived. Showing the previous AI report while it is rewritten.";
+            } else if (r.status === "error") {
+                note = `Could not reach Gemma, retrying. ${r.error || ""}`;
+            } else if (r.status === "queued" || r.status === "generating") {
+                note = "AI report not ready yet. Showing a quick rules-based summary.";
+            }
+            document.getElementById("reportNote").textContent = note;
+            document.getElementById("reportBody").textContent = r.report;
+        }
+
+        async function loadReport() {
+            if (selectedIndex === null) return;
+            const index = selectedIndex;
+
+            try {
+                const report = await api(`/api/reports/${index}`);
+                if (index !== selectedIndex) return;       // user clicked another node meanwhile
+                renderReport(report);
+            } catch (error) {
+                if (index !== selectedIndex) return;
+                document.getElementById("reportNote").textContent = error.message;
+            }
+        }
+
+        // ---- main refresh loop -------------------------------------------
+        async function refresh() {
             try {
                 const data = await api("/api/state");
                 const snap = data.snapshot;
                 const replay = data.replay;
+                const rs = data.reports;
 
                 syncGraph(data.elements);
 
+                // node disappeared (reset)? drop the stale selection
+                if (selectedIndex !== null && selectedIndex >= snap.nodes.length) {
+                    clearReport();
+                }
+
                 document.getElementById("clock").textContent = replay.clock;
-                document.getElementById("eventCount").textContent =
-                    `${replay.processed} / ${replay.total}`;
+                document.getElementById("eventCount").textContent = `${replay.processed} / ${replay.total}`;
                 document.getElementById("nodeCount").textContent = snap.nodes.length;
                 document.getElementById("alertCount").textContent = snap.alerts.length;
+                document.getElementById("reportCount").textContent = `${rs.ai_reports} / ${rs.total}`;
 
                 renderAlerts(snap.alerts);
-                renderEvents(
-                    await api("/api/logs").then(allLogs =>
-                        allLogs.slice(0, replay.processed).map((event, index) => ({
-                            ...event,
-                            timestamp: index < replay.processed
-                                ? (snap.nodes.length ? replay.clock : event.timestamp)
-                                : event.timestamp
-                        }))
-                    ).then(() => data.snapshot ? getRecentEvents(snap) : [])
-                );
+                renderEvents(data.recent);
 
                 if (replay.error) {
                     statusElement.textContent = `Replay error: ${replay.error}`;
+                    startButton.disabled = false;
                 } else if (replay.running) {
-                    statusElement.textContent = `Replaying ${replay.file || "log file"}...`;
+                    statusElement.textContent = `Replaying ${replay.file}... (${rs.pending} report(s) in progress)`;
+                    startButton.disabled = true;
                 } else if (replay.finished) {
-                    statusElement.textContent = "Replay complete. Reset to run it again.";
-                    startButton.disabled = false;
+                    statusElement.textContent = rs.pending
+                        ? `Replay complete. ${rs.pending} report(s) still being written. Reset to run again.`
+                        : "Replay complete. Reset to run it again.";
+                    startButton.disabled = true;
                 } else {
-                    statusElement.textContent =
-                        `Loaded ${replay.total} events from ${replay.file || "the test file"}.`;
+                    statusElement.textContent = `Loaded ${replay.total} events from ${replay.file}. Press Start replay.`;
                     startButton.disabled = false;
                 }
 
-                if (snap.event_count !== lastEventCount) {
-                    lastEventCount = snap.event_count;
-                }
+                await loadReport();
             } catch (error) {
                 statusElement.textContent = `Connection error: ${error.message}`;
             }
         }
 
-        function getRecentEvents(snapshot) {
-            return snapshot.recent_events || [];
-        }
-
-        // Populate recent events from the graph snapshot's event feed.
-        async function refreshDashboard() {
-            try {
-                const data = await api("/api/state");
-                const snap = data.snapshot;
-                syncGraph(data.elements);
-
-                document.getElementById("clock").textContent = data.replay.clock;
-                document.getElementById("eventCount").textContent =
-                    `${data.replay.processed} / ${data.replay.total}`;
-                document.getElementById("nodeCount").textContent = snap.nodes.length;
-                document.getElementById("alertCount").textContent = snap.alerts.length;
-
-                renderAlerts(snap.alerts);
-                renderEvents(await api("/api/recent"));
-
-                if (data.replay.error) {
-                    statusElement.textContent = `Replay error: ${data.replay.error}`;
-                } else if (data.replay.running) {
-                    statusElement.textContent = `Replaying ${data.replay.file}...`;
-                } else if (data.replay.finished) {
-                    statusElement.textContent = "Replay complete. Reset to run it again.";
-                    startButton.disabled = false;
-                } else {
-                    statusElement.textContent =
-                        `Loaded ${data.replay.total} events from ${data.replay.file}.`;
-                    startButton.disabled = false;
-                }
-            } catch (error) {
-                statusElement.textContent = `Connection error: ${error.message}`;
-            }
+        async function loop() {
+            await refresh();
+            setTimeout(loop, POLL_MS);
         }
 
         async function initialize() {
-            try {
-                const info = await api("/api/info");
-                statusElement.textContent =
-                    `Loaded ${info.total} events from ${info.file}. Press Start replay.`;
-                await showParsedLogs();
-                await refreshDashboard();
-                setInterval(refreshDashboard, 500);
-            } catch (error) {
-                statusElement.textContent = `Startup error: ${error.message}`;
-            }
+            await showParsedLogs();
+            loop();
         }
 
         initialize();

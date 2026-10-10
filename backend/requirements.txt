@@ -1,5 +1,4 @@
-Flask>=3.0,<4.0
-networkx
-python-dotenv
-pydantic
-google-genai
+flask>=3.0
+networkx>=3.2
+python-dotenv>=1.0
+requests>=2.31
