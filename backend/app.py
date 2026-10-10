@@ -1,22 +1,25 @@
-from flask import Flask, jsonify, request
+
+from flask import Flask, jsonify, render_template, request
+from convert import convert_log_to_json
 
 app = Flask(__name__)
 
-logs = []
 
 @app.route("/")
 def home():
-    return jsonify({"message": "Cybersecurity API is running!"})
+    return render_template("index.html")
 
-@app.route("/logs", methods=["GET"])
-def get_logs():
+
+@app.route("/convert", methods=["POST"])
+def convert():
+    data = request.get_json(silent=True)
+
+    if not data or not isinstance(data.get("logs"), str):
+        return jsonify({"error": "Please provide log text."}), 400
+
+    logs = convert_log_to_json(data["logs"])
     return jsonify(logs)
 
-@app.route("/logs", methods=["POST"])
-def add_log():
-    log = request.json
-    logs.append(log)
-    return jsonify({"message": "Log added!", "log": log}), 201
 
 if __name__ == "__main__":
     app.run(debug=True)

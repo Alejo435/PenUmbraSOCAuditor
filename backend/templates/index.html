@@ -1,0 +1,126 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cybersecurity Log Converter</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+            background: #f4f6f8;
+            color: #222;
+        }
+
+        textarea, pre {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        textarea {
+            height: 220px;
+            resize: vertical;
+        }
+
+        pre {
+            min-height: 100px;
+            max-height: 400px;
+            overflow: auto;
+            background: #17191d;
+            color: #d6f5d6;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        button {
+            margin: 12px 0 24px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            background: #2563eb;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        #status {
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Cybersecurity Log Converter</h1>
+    <p>Paste your raw logs below to convert them into JSON.</p>
+
+    <textarea id="logInput"
+        placeholder="Paste your .log text here..."></textarea>
+
+    <br>
+    <button onclick="convertLogs()">Convert Logs</button>
+
+    <h2>JSON Output</h2>
+    <p id="status"></p>
+    <pre id="jsonOutput">Your converted logs will appear here.</pre>
+
+    <script>
+        
+        async function convertLogs() {
+            const logText = document.getElementById("logInput").value;
+            const output = document.getElementById("jsonOutput");
+            const status = document.getElementById("status");
+
+            status.textContent = "Converting...";
+
+            try {
+                const response = await fetch("/convert", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ logs: logText })
+                });
+
+                // Read the response as text first so HTML errors don't crash JSON parsing.
+                const text = await response.text();
+
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch {
+                    throw new Error(
+                        `Server returned HTML or invalid JSON (HTTP ${response.status}). ` +
+                        "Check your Flask route and terminal for errors."
+                    );
+                }
+
+                if (!response.ok) {
+                    throw new Error(data.error || "Conversion failed.");
+                }
+
+                output.textContent = JSON.stringify(data, null, 4);
+                status.textContent =
+                    `Successfully converted ${data.length} log events.`;
+
+            } catch (error) {
+                status.textContent = `Error: ${error.message}`;
+                output.textContent = "";
+                console.error(error);
+            }
+        }
+
+    </script> 
+</body>
+</html>
