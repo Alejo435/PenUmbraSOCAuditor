@@ -1,0 +1,31 @@
+:root {
+  --umbra-900: #0e1324;
+  --umbra-800: #141a2e;
+  --umbra-700: #1b2239;
+  --umbra-600: #252e48;
+  --umbra-500: #333d5a;
+  --penumbra-400: #5d6a8a;
+  --penumbra-300: #8591b0;
+  --penumbra-200: #aeb7cf;
+  --light-100: #e9e6dd;
+  --light-50: #f6f3ec;
+  --corona-600: #d9a441;
+  --corona-500: #f0bd5a;
+  --corona-400: #f7d48e;
+  --corona-glow: rgb(240 189 90 / 0.32);
+  --ep-observed-color: var(--light-100);
+  --ep-observed-opacity: 1;
+  --ep-observed-dash: none;
+
+  --ep-detected-color: var(--corona-500);
+  --ep-detected-opacity: 1;
+  --ep-detected-dash: none;
+
+  --ep-inferred-color: var(--penumbra-200);
+  --ep-inferred-opacity: 0.7;
+  --ep-inferred-dash: 6 4;
+
+  --ep-hypothesis-color: var(--penumbra-400);
+  --ep-hypothesis-opacity: 0.45;
+  --ep-hypothesis-dash: 2 4;
+}
