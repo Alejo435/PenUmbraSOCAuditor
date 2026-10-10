@@ -7,12 +7,17 @@
   --penumbra-400: #5d6a8a;
   --penumbra-300: #8591b0;
   --penumbra-200: #aeb7cf;
-  --light-100: #e9e6dd;
-  --light-50: #f6f3ec;
+  --light-100: #ebe2cf;
+  --light-50: #f7f1e3;
   --corona-600: #d9a441;
   --corona-500: #f0bd5a;
   --corona-400: #f7d48e;
   --corona-glow: rgb(240 189 90 / 0.32);
+    --ember-500: #f2711c;
+  --ember-300: #ffa04a;
+  --ember-glow: rgb(242 113 28 / 0.4);
+  --haze-300: #a89e8b;
+  --haze-glow: rgb(214 186 140 / 0.06);
   --ep-observed-color: var(--light-100);
   --ep-observed-opacity: 1;
   --ep-observed-dash: none;
@@ -21,11 +26,28 @@
   --ep-detected-opacity: 1;
   --ep-detected-dash: none;
 
-  --ep-inferred-color: var(--penumbra-200);
+  --ep-inferred-color: var(--haze-300);
   --ep-inferred-opacity: 0.7;
   --ep-inferred-dash: 6 4;
 
   --ep-hypothesis-color: var(--penumbra-400);
   --ep-hypothesis-opacity: 0.45;
   --ep-hypothesis-dash: 2 4;
+
+    /* severity: cool to hot, skipping gold so it never competes with corona */
+  --sev-low: #5ea1d6;
+  --sev-medium: #a98bf0;
+  --sev-high: #e8587a;
+  --sev-critical: #ff3b7f;
+
+  /* entity tints: low chroma so certainty and severity stay dominant in the graph */
+  --entity-user: #9db0d8;
+  --entity-host: #8fbfb5;
+  --entity-ip: #b7a9d6;
+  --entity-process: #d6b3a0;
+  --entity-file: #b5bc98;
+
+  /* typography: plex sans for interface text, plex mono only for raw log data */
+  --font-ui: "IBM Plex Sans", system-ui, sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, monospace;
 }

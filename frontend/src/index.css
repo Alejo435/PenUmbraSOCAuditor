@@ -8,7 +8,6 @@
 @import "@fontsource/ibm-plex-mono/500.css";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -31,6 +30,10 @@
   --color-corona-500: var(--corona-500);
   --color-corona-400: var(--corona-400);
 
+  --color-ember-500: var(--ember-500);
+  --color-ember-300: var(--ember-300);
+  --color-haze-300: var(--haze-300);
+
   --color-sev-low: var(--sev-low);
   --color-sev-medium: var(--sev-medium);
   --color-sev-high: var(--sev-high);
@@ -43,7 +46,7 @@
   --color-entity-file: var(--entity-file);
 
   /* replaces tailwind's default font stacks so font-sans and font-mono use plex */
-  --font-sans: 'Geist Variable', sans-serif;
+  --font-sans: var(--font-ui);
   --font-mono: var(--font-data);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -95,9 +98,6 @@ body,
 
 body {
   margin: 0;
-  background: var(--umbra-900);
-  color: var(--light-100);
-  font-family: var(--font-ui);
   font-size: 15px;
   line-height: 1.5;
   color-scheme: dark;
@@ -106,72 +106,45 @@ body {
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
+  --background: var(--umbra-900);
+  --foreground: var(--light-100);
+  --card: var(--umbra-800);
+  --card-foreground: var(--light-100);
+  --popover: var(--umbra-700);
+  --popover-foreground: var(--light-100);
+  --primary: var(--light-100);
+  --primary-foreground: var(--umbra-900);
+  --secondary: var(--umbra-700);
+  --secondary-foreground: var(--light-100);
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --muted: var(--umbra-800);
+  --muted-foreground: var(--penumbra-300);
+
+  --accent: var(--umbra-700);
+  --accent-foreground: var(--light-100);
+
+  --destructive: var(--sev-high);
+  --border: var(--umbra-600);
+  --input: var(--umbra-600);
+
+  --ring: var(--corona-500);
+
+  --chart-1: var(--corona-500);
+  --chart-2: var(--sev-low);
+  --chart-3: var(--sev-medium);
+  --chart-4: var(--sev-high);
+  --chart-5: var(--penumbra-300);
+
+  --radius: 0.375rem;
+
+  --sidebar: var(--umbra-800);
+  --sidebar-foreground: var(--light-100);
+  --sidebar-primary: var(--light-100);
+  --sidebar-primary-foreground: var(--umbra-900);
+  --sidebar-accent: var(--umbra-700);
+  --sidebar-accent-foreground: var(--light-100);
+  --sidebar-border: var(--umbra-600);
+  --sidebar-ring: var(--corona-500);
 }
 
 @layer base {
