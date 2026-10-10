@@ -1,0 +1,8 @@
+flask>=3.0
+dash>=2.17
+dash-cytoscape>=1.0
+networkx>=3.2
+numpy>=1.26
+google-genai>=1.0
+python-dotenv>=1.0
+pydantic>=2.0

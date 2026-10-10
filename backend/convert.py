@@ -1,30 +1,50 @@
+import shlex
+
 
 def convert_log_to_json(log_text):
+    """Convert raw log text into structured events for the graph engine."""
     logs = []
 
-    for line in log_text.splitlines():
+    for line_number, line in enumerate(log_text.splitlines(), start=1):
         line = line.strip()
 
-        # Skip empty lines and comments
         if not line or line.startswith("#"):
             continue
 
+        # Expected basic format: timestamp severity source message
         parts = line.split(" ", 3)
 
-        # Skip lines that do not have all four fields
         if len(parts) < 4:
             continue
 
-        timestamp = parts[0]
-        severity = parts[1]
-        source = parts[2]
-        message = parts[3]
+        timestamp, severity, source, message = parts
+
+        # Parse key=value fields from the message.
+        fields = {}
+
+        try:
+            tokens = shlex.split(message)
+        except ValueError:
+            # Keep processing even if a line has malformed quotes.
+            tokens = message.split()
+
+        for token in tokens:
+            if "=" not in token:
+                continue
+
+            key, value = token.split("=", 1)
+            fields[key] = value
+
+        event_type = fields.pop("event", "unknown")
 
         logs.append({
             "timestamp": timestamp,
-            "severity": severity,
+            "severity": severity.upper(),
             "source": source,
-            "message": message
+            "event": event_type,
+            "fields": fields,
+            "message": message,
+            "line_number": line_number
         })
 
     return logs

@@ -4,123 +4,592 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cybersecurity Log Converter</title>
+    <title>Cybersecurity Threat Graph</title>
+
+    <script src="https://unpkg.com/cytoscape@3.30.4/dist/cytoscape.min.js"></script>
 
     <style>
-        body {
+        :root {
             font-family: Arial, sans-serif;
-            max-width: 900px;
-            margin: 40px auto;
-            padding: 0 20px;
-            background: #f4f6f8;
-            color: #222;
+            color: #e5e7eb;
+            background: #111827;
         }
 
-        textarea, pre {
-            width: 100%;
-            box-sizing: border-box;
-            padding: 15px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-family: monospace;
-            font-size: 14px;
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 24px;
         }
 
-        textarea {
-            height: 220px;
-            resize: vertical;
+        header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
         }
 
-        pre {
-            min-height: 100px;
-            max-height: 400px;
-            overflow: auto;
-            background: #17191d;
-            color: #d6f5d6;
-            white-space: pre-wrap;
-            overflow-wrap: anywhere;
+        h1, h2, p { margin-top: 0; }
+
+        h1 { margin-bottom: 6px; }
+        h2 { font-size: 18px; }
+
+        .muted { color: #9ca3af; }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         button {
-            margin: 12px 0 24px;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 6px;
+            border: 0;
+            border-radius: 7px;
+            padding: 10px 16px;
+            font-weight: bold;
+            cursor: pointer;
             background: #2563eb;
             color: white;
-            cursor: pointer;
         }
 
-        button:hover {
-            background: #1d4ed8;
+        button.secondary { background: #374151; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
         }
 
-        #status {
-            margin-bottom: 12px;
+        .panel, .stat {
+            background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 10px;
+            padding: 16px;
+            min-width: 0;
+        }
+
+        .stat .value {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+            gap: 16px;
+        }
+
+        #graph {
+            width: 100%;
+            height: 580px;
+            background: #0b1220;
+            border-radius: 8px;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: #d1d5db;
+        }
+
+        .dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .side {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .feed {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .event, .alert {
+            border-bottom: 1px solid #374151;
+            padding: 10px 0;
+            overflow-wrap: anywhere;
+        }
+
+        .event:last-child, .alert:last-child { border-bottom: 0; }
+
+        .severity {
+            display: inline-block;
+            border-radius: 4px;
+            padding: 3px 6px;
+            font-size: 11px;
+            font-weight: bold;
+            background: #374151;
+        }
+
+        .severity.ERROR, .severity.CRITICAL { background: #991b1b; }
+        .severity.WARN, .severity.WARNING { background: #92400e; }
+        .severity.INFO { background: #1e40af; }
+
+        .alert { border-left: 3px solid #ef4444; padding-left: 10px; }
+        .alert.medium { border-left-color: #f59e0b; }
+        .alert.low { border-left-color: #60a5fa; }
+
+        details { margin-top: 16px; }
+
+        pre {
+            background: #0b1220;
+            color: #d1fae5;
+            padding: 14px;
+            border-radius: 8px;
+            overflow: auto;
+            max-height: 400px;
+            font-size: 12px;
+        }
+
+        .status-line {
+            margin: 12px 0;
+            overflow-wrap: anywhere;
+        }
+
+        @media (max-width: 900px) {
+            .main-grid { grid-template-columns: 1fr; }
+            .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            #graph { height: 450px; }
         }
     </style>
 </head>
 
 <body>
-    <h1>Cybersecurity Log Converter</h1>
-    <p>Paste your raw logs below to convert them into JSON.</p>
+    <header>
+        <div>
+            <h1>Cybersecurity Threat Graph</h1>
+            <p class="muted">Live log replay and entity relationships</p>
+        </div>
 
-    <textarea id="logInput"
-        placeholder="Paste your .log text here..."></textarea>
+        <div class="controls">
+            <button id="startButton" onclick="startReplay()">Start replay</button>
+            <button class="secondary" onclick="resetReplay()">Reset</button>
+            <button class="secondary" onclick="showParsedLogs()">Refresh JSON</button>
+        </div>
+    </header>
 
-    <br>
-    <button onclick="convertLogs()">Convert Logs</button>
+    <section class="stats">
+        <div class="stat">
+            <div class="muted">Simulation clock</div>
+            <div class="value" id="clock">20:00:00</div>
+        </div>
+        <div class="stat">
+            <div class="muted">Events processed</div>
+            <div class="value" id="eventCount">0 / 0</div>
+        </div>
+        <div class="stat">
+            <div class="muted">Graph nodes</div>
+            <div class="value" id="nodeCount">0</div>
+        </div>
+        <div class="stat">
+            <div class="muted">Detection alerts</div>
+            <div class="value" id="alertCount">0</div>
+        </div>
+    </section>
 
-    <h2>JSON Output</h2>
-    <p id="status"></p>
-    <pre id="jsonOutput">Your converted logs will appear here.</pre>
+    <p class="status-line muted" id="status">Loading test file information...</p>
+
+    <section class="main-grid">
+        <div class="panel">
+            <h2>Entity relationship graph</h2>
+            <div id="graph"></div>
+            <div class="legend">
+                <span><i class="dot" style="background:#60a5fa"></i>User</span>
+                <span><i class="dot" style="background:#34d399"></i>Host</span>
+                <span><i class="dot" style="background:#a78bfa"></i>IP</span>
+                <span><i class="dot" style="background:#fbbf24"></i>Process</span>
+                <span><i class="dot" style="background:#9ca3af"></i>File</span>
+                <span><i class="dot" style="background:#ef4444"></i>Risk flagged</span>
+            </div>
+            <p class="muted" style="margin-top:12px">
+                Select a node or connection to inspect its details. Red connections
+                indicate suspicious relationships.
+            </p>
+            <pre id="selection">Select a node or connection to see details.</pre>
+        </div>
+
+        <div class="side">
+            <div class="panel">
+                <h2>Detection alerts</h2>
+                <div class="feed" id="alerts">
+                    <p class="muted">No alerts yet.</p>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>Recent events</h2>
+                <div class="feed" id="events">
+                    <p class="muted">Waiting for replay...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <details>
+        <summary>View parsed log JSON</summary>
+        <p class="muted">These are the structured events parsed from your test file.</p>
+        <pre id="jsonOutput">Click Refresh JSON to load the parsed events.</pre>
+    </details>
 
     <script>
-        
-        async function convertLogs() {
-            const logText = document.getElementById("logInput").value;
-            const output = document.getElementById("jsonOutput");
-            const status = document.getElementById("status");
+        const graphElement = document.getElementById("graph");
+        const statusElement = document.getElementById("status");
+        const startButton = document.getElementById("startButton");
 
-            status.textContent = "Converting...";
+        let previousElementIds = new Set();
+        let hasFittedGraph = false;
+        let lastEventCount = 0;
+        refreshDashboard();
+        setInterval(refreshDashboard, 100);
 
+        if (typeof cytoscape === "undefined") {
+            statusElement.textContent =
+                "Could not load Cytoscape.js. Check your internet connection.";
+        }
+
+        const cy = cytoscape({
+            container: graphElement,
+            elements: [],
+            minZoom: 0.25,
+            maxZoom: 3,
+            style: [
+                {
+                    selector: "node",
+                    style: {
+                        "label": "data(label)",
+                        "font-size": 10,
+                        "color": "#f9fafb",
+                        "text-wrap": "wrap",
+                        "text-max-width": 100,
+                        "text-valign": "center",
+                        "text-halign": "center",
+                        "background-color": "#6b7280",
+                        "width": 42,
+                        "height": 42,
+                        "border-width": 1,
+                        "border-color": "#9ca3af"
+                    }
+                },
+                {
+                    selector: 'node[type = "user"]',
+                    style: { "background-color": "#60a5fa" }
+                },
+                {
+                    selector: 'node[type = "host"]',
+                    style: { "background-color": "#34d399" }
+                },
+                {
+                    selector: 'node[type = "ip"]',
+                    style: { "background-color": "#a78bfa" }
+                },
+                {
+                    selector: 'node[type = "process"]',
+                    style: { "background-color": "#fbbf24" }
+                },
+                {
+                    selector: 'node[type = "file"]',
+                    style: { "background-color": "#9ca3af" }
+                },
+                {
+                    selector: "node[risk > 0]",
+                    style: {
+                        "border-color": "#ef4444",
+                        "border-width": 4
+                    }
+                },
+                {
+                    selector: "edge",
+                    style: {
+                        "width": 2,
+                        "line-color": "#64748b",
+                        "target-arrow-color": "#64748b",
+                        "target-arrow-shape": "triangle",
+                        "curve-style": "bezier",
+                        "label": "data(label)",
+                        "font-size": 8,
+                        "color": "#cbd5e1",
+                        "text-background-color": "#0b1220",
+                        "text-background-opacity": 0.85,
+                        "text-background-padding": 2
+                    }
+                },
+                {
+                    selector: "edge.attack",
+                    style: {
+                        "line-color": "#ef4444",
+                        "target-arrow-color": "#ef4444",
+                        "width": 3
+                    }
+                },
+                {
+                    selector: ".selected",
+                    style: { "overlay-opacity": 0.15 }
+                }
+            ],
+            layout: { name: "preset" }
+        });
+
+        cy.on("tap", "node, edge", function (event) {
+            document.getElementById("selection").textContent =
+                JSON.stringify(event.target.data(), null, 4);
+        });
+
+        async function api(url, options = {}) {
+            const response = await fetch(url, options);
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || `Request failed (${response.status})`);
+            }
+
+            return data;
+        }
+
+        async function startReplay() {
             try {
-                const response = await fetch("/convert", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ logs: logText })
-                });
-
-                // Read the response as text first so HTML errors don't crash JSON parsing.
-                const text = await response.text();
-
-                let data;
-                try {
-                    data = JSON.parse(text);
-                } catch {
-                    throw new Error(
-                        `Server returned HTML or invalid JSON (HTTP ${response.status}). ` +
-                        "Check your Flask route and terminal for errors."
-                    );
-                }
-
-                if (!response.ok) {
-                    throw new Error(data.error || "Conversion failed.");
-                }
-
-                output.textContent = JSON.stringify(data, null, 4);
-                status.textContent =
-                    `Successfully converted ${data.length} log events.`;
-
+                await api("/api/start", { method: "POST" });
+                statusElement.textContent = "Replay started.";
+                startButton.disabled = true;
+                await refreshDashboard();
             } catch (error) {
-                status.textContent = `Error: ${error.message}`;
-                output.textContent = "";
-                console.error(error);
+                statusElement.textContent = `Error: ${error.message}`;
             }
         }
 
-    </script> 
+        async function resetReplay() {
+            try {
+                await api("/api/reset", { method: "POST" });
+                previousElementIds.clear();
+                hasFittedGraph = false;
+                lastEventCount = 0;
+                startButton.disabled = false;
+                document.getElementById("selection").textContent =
+                    "Select a node or connection to see details.";
+                await refreshState();
+                statusElement.textContent = "Replay reset. Ready to start.";
+            } catch (error) {
+                statusElement.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function showParsedLogs() {
+            try {
+                const data = await api("/api/logs");
+                document.getElementById("jsonOutput").textContent =
+                    JSON.stringify(data, null, 4);
+            } catch (error) {
+                statusElement.textContent = `Error loading JSON: ${error.message}`;
+            }
+        }
+
+        function syncGraph(elements) {
+            const incomingIds = new Set(elements.map(item => item.data.id));
+
+            // Remove graph elements that are no longer present.
+            cy.elements().forEach(element => {
+                if (!incomingIds.has(element.id())) {
+                    element.remove();
+                }
+            });
+
+            // Add new elements and update existing ones without rebuilding the
+            // entire graph on every poll.
+            for (const item of elements) {
+                const existing = cy.getElementById(item.data.id);
+
+                if (existing.length) {
+                    existing.data(item.data);
+                    existing.classes(item.classes || "");
+
+                    if (item.position && existing.isNode()) {
+                        existing.position(item.position);
+                    }
+                } else {
+                    cy.add(item);
+                }
+            }
+
+            if (!hasFittedGraph && cy.nodes().length > 0) {
+                cy.fit(cy.elements(), 40);
+                hasFittedGraph = true;
+            }
+        }
+
+        function renderAlerts(alerts) {
+            const container = document.getElementById("alerts");
+
+            if (!alerts.length) {
+                container.innerHTML = '<p class="muted">No alerts yet.</p>';
+                return;
+            }
+
+            container.replaceChildren();
+
+            for (const alert of [...alerts].reverse()) {
+                const item = document.createElement("div");
+                item.className = `alert ${alert.severity}`;
+
+                const title = document.createElement("strong");
+                title.textContent = `${alert.severity.toUpperCase()}: ${alert.rule.replaceAll("_", " ")}`;
+
+                const time = document.createElement("div");
+                time.className = "muted";
+                time.textContent = alert.timestamp;
+
+                const message = document.createElement("p");
+                message.textContent = alert.message;
+
+                item.append(title, time, message);
+                container.appendChild(item);
+            }
+        }
+
+        function renderEvents(events) {
+            const container = document.getElementById("events");
+
+            if (!events.length) {
+                container.innerHTML = '<p class="muted">Waiting for replay...</p>';
+                return;
+            }
+
+            container.replaceChildren();
+
+            for (const event of [...events].reverse()) {
+                const item = document.createElement("div");
+                item.className = "event";
+
+                const title = document.createElement("strong");
+                title.textContent = event.event.replaceAll("_", " ");
+
+                const severity = document.createElement("span");
+                severity.className = `severity ${event.severity}`;
+                severity.textContent = event.severity;
+
+                const time = document.createElement("div");
+                time.className = "muted";
+                time.textContent = event.timestamp;
+
+                const source = document.createElement("div");
+                source.textContent = `Source: ${event.source}`;
+
+                item.append(title, document.createTextNode(" "), severity, time, source);
+                container.appendChild(item);
+            }
+        }
+
+        async function refreshState() {
+            try {
+                const data = await api("/api/state");
+                const snap = data.snapshot;
+                const replay = data.replay;
+
+                syncGraph(data.elements);
+
+                document.getElementById("clock").textContent = replay.clock;
+                document.getElementById("eventCount").textContent =
+                    `${replay.processed} / ${replay.total}`;
+                document.getElementById("nodeCount").textContent = snap.nodes.length;
+                document.getElementById("alertCount").textContent = snap.alerts.length;
+
+                renderAlerts(snap.alerts);
+                renderEvents(
+                    await api("/api/logs").then(allLogs =>
+                        allLogs.slice(0, replay.processed).map((event, index) => ({
+                            ...event,
+                            timestamp: index < replay.processed
+                                ? (snap.nodes.length ? replay.clock : event.timestamp)
+                                : event.timestamp
+                        }))
+                    ).then(() => data.snapshot ? getRecentEvents(snap) : [])
+                );
+
+                if (replay.error) {
+                    statusElement.textContent = `Replay error: ${replay.error}`;
+                } else if (replay.running) {
+                    statusElement.textContent = `Replaying ${replay.file || "log file"}...`;
+                } else if (replay.finished) {
+                    statusElement.textContent = "Replay complete. Reset to run it again.";
+                    startButton.disabled = false;
+                } else {
+                    statusElement.textContent =
+                        `Loaded ${replay.total} events from ${replay.file || "the test file"}.`;
+                    startButton.disabled = false;
+                }
+
+                if (snap.event_count !== lastEventCount) {
+                    lastEventCount = snap.event_count;
+                }
+            } catch (error) {
+                statusElement.textContent = `Connection error: ${error.message}`;
+            }
+        }
+
+        function getRecentEvents(snapshot) {
+            return snapshot.recent_events || [];
+        }
+
+        // Populate recent events from the graph snapshot's event feed.
+        async function refreshDashboard() {
+            try {
+                const data = await api("/api/state");
+                const snap = data.snapshot;
+                syncGraph(data.elements);
+
+                document.getElementById("clock").textContent = data.replay.clock;
+                document.getElementById("eventCount").textContent =
+                    `${data.replay.processed} / ${data.replay.total}`;
+                document.getElementById("nodeCount").textContent = snap.nodes.length;
+                document.getElementById("alertCount").textContent = snap.alerts.length;
+
+                renderAlerts(snap.alerts);
+                renderEvents(await api("/api/recent"));
+
+                if (data.replay.error) {
+                    statusElement.textContent = `Replay error: ${data.replay.error}`;
+                } else if (data.replay.running) {
+                    statusElement.textContent = `Replaying ${data.replay.file}...`;
+                } else if (data.replay.finished) {
+                    statusElement.textContent = "Replay complete. Reset to run it again.";
+                    startButton.disabled = false;
+                } else {
+                    statusElement.textContent =
+                        `Loaded ${data.replay.total} events from ${data.replay.file}.`;
+                    startButton.disabled = false;
+                }
+            } catch (error) {
+                statusElement.textContent = `Connection error: ${error.message}`;
+            }
+        }
+
+        async function initialize() {
+            try {
+                const info = await api("/api/info");
+                statusElement.textContent =
+                    `Loaded ${info.total} events from ${info.file}. Press Start replay.`;
+                await showParsedLogs();
+                await refreshDashboard();
+                setInterval(refreshDashboard, 500);
+            } catch (error) {
+                statusElement.textContent = `Startup error: ${error.message}`;
+            }
+        }
+
+        initialize();
+    </script>
 </body>
 </html>
