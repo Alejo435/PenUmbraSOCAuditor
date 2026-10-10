@@ -15,7 +15,7 @@ import copy
 import os
 import threading
 import time
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from flask import Flask, jsonify, render_template, request
@@ -33,9 +33,10 @@ state_lock = threading.RLock()
 
 # 1.0 = log time runs in real time; 15 = 15x faster.
 REPLAY_SPEED = float(os.getenv("REPLAY_SPEED", "1"))
+START_CLOCK = os.getenv("START_CLOCK", "20:00:00")   # what the simulation clock shows before/at replay start
 
 parsed_logs = []
-start_clock = "20:00:00"
+start_clock = START_CLOCK
 replay_token = 0          # bumped on every start/reset so an old replay thread can never keep running
 replay_status = {
     "running": False,
@@ -71,16 +72,22 @@ def _replay_is_current(token):
     return replay_status["running"] and token == replay_token
 
 
+def clock_origin(first_event_time):
+    """Log-time moment the clock starts at: START_CLOCK on the first event's date.
+    If the first event is earlier than that, the clock starts at the first event instead."""
+    h, m, s = (int(x) for x in START_CLOCK.split(":"))
+    origin = first_event_time.replace(hour=h, minute=m, second=s, microsecond=0)
+    return min(origin, first_event_time)
+
+
 def replay_events(token):
     try:
         wall_start = time.monotonic()
-        log_start = None
+        log_start = clock_origin(parse_timestamp(parsed_logs[0]["timestamp"]))
 
         for index, original_event in enumerate(parsed_logs):
             event = copy.deepcopy(original_event)
             current = parse_timestamp(event["timestamp"])
-            if log_start is None:
-                log_start = current
 
             target_elapsed = (current - log_start).total_seconds() / REPLAY_SPEED
 
@@ -224,7 +231,7 @@ def add_log():
 
 
 def main():
-    global parsed_logs, start_clock
+    global parsed_logs
 
     parser = argparse.ArgumentParser(description="Replay a log file into the cybersecurity threat graph.")
     parser.add_argument("log_file", nargs="?", default=os.getenv("LOG_FILE", "cybersecurity_test.log"),
@@ -237,8 +244,7 @@ def main():
         parser.error(str(exc))
 
     parsed_logs = events
-    start_clock = parse_timestamp(events[0]["timestamp"]).strftime("%H:%M:%S")
-    replay_status.update({"file": str(path), "total": len(parsed_logs), "clock": start_clock})
+    replay_status.update({"file": str(path), "total": len(parsed_logs), "clock": START_CLOCK})
 
     port = int(os.getenv("PORT", "5000"))
     print(f"Loaded {len(parsed_logs)} events from {path}")
