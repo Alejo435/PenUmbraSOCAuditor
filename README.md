@@ -16,6 +16,54 @@ A visual threat console for security beginners. It replays a log file in real ti
 - **Backend:** Python, Flask, NetworkX
 - **AI:** Gemma-2-2b-it over Tailscale
 
+## Set up the AI server
+
+Only one person needs to do this, on the computer with the GPU. **Everyone else can skip this part.**
+
+**What you need:** Python 3.10 to 3.12, an NVIDIA GPU, and the Gemma model files in a folder called `gemma-2-2b-it`, right next to `gemma_server.py`.
+
+1. **Open a terminal.** Open the folder with `gemma_server.py` in VS Code and open a terminal.
+
+2. **Make a virtual environment and turn it on:**
+
+```powershell
+   python -m venv .venv
+   .venv\Scripts\Activate.ps1
+```
+
+3. **Install the requirements.** For `torch`, use the install command from the [PyTorch website](https://pytorch.org/get-started/locally/) so you get the GPU version, otherwise it will be really slow.
+
+```powershell
+   pip install flask torch transformers accelerate
+```
+
+4. **Pick a long password.** This keeps random people from using our AI. You will use it as `GEMMA_TOKEN`.
+
+5. **Start the server** (swap in your real password):
+
+```powershell
+   $env:GEMMA_HOST="0.0.0.0"
+   $env:GEMMA_TOKEN="your-password"
+   python gemma_server.py
+```
+
+6. **Wait until you see these two lines:**
+
+```
+   Model loaded on: cuda:0
+   Running on all addresses (0.0.0.0)
+```
+
+7. **Leave the terminal open!** If you close it, the AI stops for everyone. Also don't let the computer go to sleep. The settings in step 5 go away when the terminal closes, so you have to retype them every time.
+
+8. **Allow the VPN through the firewall (one time only).** Open PowerShell as Administrator and run:
+
+```powershell
+   New-NetFirewallRule -DisplayName "Gemma server" -Direction Inbound -Protocol TCP -LocalPort 8000 -RemoteAddress 100.64.0.0/10 -Action Allow
+```
+
+   This lets the VPN connect to the server and nothing else.
+
 ## Run it
 
 You need Python 3.10+ and Node.js 20.19+. Use two terminals.
