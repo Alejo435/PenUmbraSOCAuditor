@@ -20,6 +20,14 @@ export const api = {
   // events ingested so far, oldest first
   getEvents: () => request<LogEvent[]>('/logs'),
   getReport: (index: number) => request<NodeReport>(`/api/reports/${index}`),
+  getReports: () => request<NodeReport[]>('/api/reports'),
   start: () => request<{ message: string }>('/api/start', { method: 'POST' }),
   reset: () => request<{ message: string }>('/api/reset', { method: 'POST' }),
+    // sends one raw log line straight into the graph, outside the replay
+  injectLog: (raw: string) =>
+  request<{ message: string }>('/logs', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ raw }),
+  }),
 }

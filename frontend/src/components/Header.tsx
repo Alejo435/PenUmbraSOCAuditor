@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { RawDataDialog } from "@/components/RawDataDialog";
 import { useConsoleStore } from "@/store";
 import type { StateResponse, StreamStatus } from "@/types";
 
@@ -66,6 +67,43 @@ function EventRate({ rate }: { rate: number }) {
 	);
 }
 
+// background report writer state, so it is visible when ai analysis is still catching up
+function AnalystStatus() {
+	const summary = useConsoleStore((s) => s.state?.reports);
+	if (!summary) return null;
+
+	if (summary.mode === "rules") {
+		return <div className="text-sm text-penumbra-300">AI analysis off</div>;
+	}
+
+	const writing = summary.pending > 0;
+	const failing = summary.errors > 0;
+
+	return (
+		<div className="flex items-center gap-2 text-sm tabular-nums text-penumbra-300">
+			<span
+				className={cn(
+					"size-1.5 rounded-full",
+					failing
+						? "bg-sev-high"
+						: writing
+							? "bg-haze-300 motion-safe:animate-pulse"
+							: "bg-penumbra-400",
+				)}
+			/>
+			<span>
+				AI reports <span className="text-light-100">{summary.ai_reports}</span>/
+				{summary.total}
+			</span>
+			{failing ? (
+				<span className="text-sev-high">Gemma unavailable</span>
+			) : writing ? (
+				<span>{summary.pending} in progress</span>
+			) : null}
+		</div>
+	);
+}
+
 // a finished replay still reads as live, since a real monitoring session stays connected
 function streamStatus(
 	state: StateResponse | null,
@@ -100,8 +138,10 @@ export function Header({ className }: { className?: string }) {
 			</span>
 			<LiveIndicator status={status} />
 			<div className="ml-auto flex items-center gap-6">
+				<AnalystStatus />
 				<EventRate rate={eventsPerSecond} />
 				<ScenarioClock day={day} time={time} />
+				<RawDataDialog />
 			</div>
 		</header>
 	);

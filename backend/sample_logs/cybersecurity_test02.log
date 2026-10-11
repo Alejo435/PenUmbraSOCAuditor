@@ -1,0 +1,37 @@
+# Synthetic cybersecurity test log (1 minute)
+# Purpose: test log ingestion, parsing, filtering, alerting, and dashboard display.
+# All IP addresses below are reserved for documentation/examples (RFC 5737) or localhost.
+# No real credentials, users, or incidents are represented.
+# Format: ISO-8601 timestamp | severity | source | event | key=value fields
+ 
+2026-10-09T20:00:01Z INFO auth-service event=service_start host=web-01 version=1.4.2
+2026-10-09T20:00:01Z INFO auth-service event=login_success user=alex source_ip=192.0.2.10 method=password
+2026-10-09T20:00:02Z INFO web-server event=http_request source_ip=192.0.2.10 method=GET path=/dashboard status=200 bytes=4281
+2026-10-09T20:00:06Z WARN auth-service event=login_failed user=admin source_ip=198.51.100.23 reason=invalid_password
+2026-10-09T20:00:06Z WARN auth-service event=login_failed user=admin source_ip=198.51.100.23 reason=invalid_password
+2026-10-09T20:00:07Z WARN auth-service event=login_failed user=admin source_ip=198.51.100.23 reason=invalid_password
+2026-10-09T20:00:07Z WARN auth-service event=login_failed user=admin source_ip=198.51.100.23 reason=invalid_password
+2026-10-09T20:00:08Z WARN auth-service event=login_failed user=admin source_ip=198.51.100.23 reason=invalid_password
+2026-10-09T20:00:08Z WARN auth-service event=login_failed user=root source_ip=198.51.100.23 reason=invalid_password
+2026-10-09T20:00:09Z WARN auth-service event=login_failed user=test source_ip=198.51.100.23 reason=invalid_password
+2026-10-09T20:00:11Z INFO auth-service event=login_success user=alex source_ip=192.0.2.10 method=mfa
+2026-10-09T20:00:12Z INFO web-server event=http_request source_ip=192.0.2.10 method=GET path=/api/profile status=200 bytes=812
+2026-10-09T20:00:19Z WARN web-server event=http_request source_ip=203.0.113.77 method=GET path=/../../etc/passwd status=400 bytes=219
+2026-10-09T20:00:19Z WARN web-server event=http_request source_ip=203.0.113.77 method=GET path=/%2e%2e/%2e%2e/etc/passwd status=400 bytes=219
+2026-10-09T20:00:21Z WARN web-server event=http_request source_ip=203.0.113.77 method=GET path=/wp-login.php status=404 bytes=162
+2026-10-09T20:00:21Z INFO firewall event=connection_allowed source_ip=192.0.2.10 destination_ip=192.0.2.50 destination_port=443 protocol=TCP
+2026-10-09T20:00:22Z WARN firewall event=connection_blocked source_ip=198.51.100.23 destination_ip=192.0.2.50 destination_port=22 protocol=TCP rule=deny_external_ssh
+2026-10-09T20:00:26Z INFO endpoint event=process_start host=workstation-04 user=alex process=browser.exe pid=4820 parent=explorer.exe
+2026-10-09T20:00:26Z INFO endpoint event=process_start host=workstation-04 user=alex process=notepad.exe pid=4924 parent=explorer.exe
+2026-10-09T20:00:33Z WARN endpoint event=unusual_process host=workstation-04 user=alex process=powershell.exe pid=5108 parent=winword.exe command="powershell.exe -NoProfile" detection=parent_process_anomaly
+2026-10-09T20:00:36Z ERROR app event=database_connection_failed host=api-02 database=appdb error=connection_timeout
+2026-10-09T20:00:36Z INFO app event=database_connection_restored host=api-02 database=appdb duration_seconds=8
+2026-10-09T20:00:44Z WARN auth-service event=privilege_change user=alex source_ip=192.0.2.10 target_role=admin result=denied reason=approval_required
+2026-10-09T20:00:45Z INFO backup event=backup_complete host=storage-01 files=1842 duration_seconds=37
+2026-10-09T20:00:52Z WARN web-server event=http_request source_ip=203.0.113.88 method=POST path=/login status=429 bytes=97 note=rate_limit_triggered
+2026-10-09T20:00:52Z WARN web-server event=http_request source_ip=203.0.113.88 method=POST path=/login status=429 bytes=97 note=rate_limit_triggered
+2026-10-09T20:00:52Z WARN web-server event=http_request source_ip=203.0.113.88 method=POST path=/login status=429 bytes=97 note=rate_limit_triggered
+2026-10-09T20:00:59Z INFO auth-service event=logout user=alex source_ip=192.0.2.10
+2026-10-09T20:01:00Z INFO monitoring event=heartbeat host=web-01 status=healthy
+2026-10-09T20:01:00Z INFO monitoring event=heartbeat host=api-02 status=healthy
+2026-10-09T20:01:00Z INFO monitoring event=heartbeat host=storage-01 status=healthy

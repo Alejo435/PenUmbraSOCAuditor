@@ -1,4 +1,4 @@
-import { alertsForEvent } from "@/lib/evidence";
+import { alertsByEvent } from "@/lib/evidence";
 import { humanize, timeOf } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useConsoleStore } from "@/store";
@@ -68,6 +68,7 @@ function FeedRow({ event, alerts }: { event: LogEvent; alerts: Alert[] }) {
 export function EventFeed() {
 	const events = useConsoleStore((s) => s.events);
 	const alerts = useConsoleStore((s) => s.state?.snapshot.alerts) ?? [];
+	const alertsAt = alertsByEvent(events, alerts);
 
 	if (events.length === 0) {
 		return (
@@ -88,7 +89,7 @@ export function EventFeed() {
 					<FeedRow
 						key={index}
 						event={event}
-						alerts={alertsForEvent(event, alerts)}
+						alerts={alertsAt.get(index) ?? []}
 					/>
 				))}
 		</ol>

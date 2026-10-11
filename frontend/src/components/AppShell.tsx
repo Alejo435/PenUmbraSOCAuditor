@@ -3,6 +3,8 @@ import { Header } from "@/components/Header";
 import { EventFeed } from "@/components/EventFeed";
 import { ThreatGraph } from "@/components/ThreatGraph";
 import { Inspector } from "@/components/Inspector";
+import { Timeline } from "@/components/TImeline";
+import { OperatorPanel } from "@/components/OperatorPanel";
 import { useBackendPolling } from "@/lib/usePolling";
 
 // top-level console layout: header, event feed, graph stage, inspector and timeline
@@ -27,7 +29,12 @@ export function AppShell() {
 				<Inspector />
 			</Panel>
 
-			<Panel title="Timeline" className="col-span-3 border-t" />
+			<Panel title="Timeline" className="col-span-3 border-t">
+				<Timeline />
+			</Panel>
+
+			{/* fixed position, so it floats above the grid instead of taking a cell */}
+			<OperatorPanel />
 		</div>
 	);
 }
