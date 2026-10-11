@@ -33,6 +33,9 @@
   --color-ember-500: var(--ember-500);
   --color-ember-300: var(--ember-300);
   --color-haze-300: var(--haze-300);
+  
+  --color-edge: var(--edge);
+  --color-edge-soft: var(--edge-soft);
 
   --color-sev-low: var(--sev-low);
   --color-sev-medium: var(--sev-medium);
@@ -124,8 +127,8 @@ body {
   --accent-foreground: var(--light-100);
 
   --destructive: var(--sev-high);
-  --border: var(--umbra-600);
-  --input: var(--umbra-600);
+  --border: var(--edge-soft);
+  --input: var(--edge);
 
   --ring: var(--corona-500);
 
@@ -135,7 +138,7 @@ body {
   --chart-4: var(--sev-high);
   --chart-5: var(--penumbra-300);
 
-  --radius: 0.375rem;
+  --radius: 0.5rem;
 
   --sidebar: var(--umbra-800);
   --sidebar-foreground: var(--light-100);
@@ -157,4 +160,73 @@ body {
   html {
     @apply font-sans;
   }
+}
+
+@layer components {
+  /* the page behind the panels: indigo shadow with soft golden light breaking through from above */
+    /* the page behind the cards: indigo with the base color painted directly, plus a slowly
+     drifting layer of indigo, gold and black light pools drawn on the pseudo-element below */
+  .console-backdrop {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background: var(--umbra-900);
+  }
+
+  /* larger than the screen so its edges never show while it drifts */
+  .console-backdrop::before {
+    content: '';
+    position: absolute;
+    inset: -20%;
+    z-index: -1;
+    background:
+      radial-gradient(40% 35% at 70% 5%, color-mix(in oklab, var(--corona-500) 11%, transparent), transparent 70%),
+      radial-gradient(45% 40% at 20% 30%, color-mix(in oklab, var(--umbra-500) 55%, transparent), transparent 70%),
+      radial-gradient(50% 45% at 85% 85%, color-mix(in oklab, black 50%, transparent), transparent 70%),
+      radial-gradient(40% 40% at 10% 95%, color-mix(in oklab, var(--ember-500) 5%, transparent), transparent 70%),
+      radial-gradient(35% 35% at 50% 60%, color-mix(in oklab, black 35%, transparent), transparent 70%);
+    animation: backdrop-drift 55s ease-in-out infinite alternate;
+    will-change: transform;
+  }
+
+  /* panels catch warm light at the top and fade to indigo, with a faint highlight on the top edge */
+  .panel-surface {
+    background: linear-gradient(180deg, var(--surface-top), var(--surface-bottom));
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, var(--light-100) 5%, transparent),
+      0 8px 24px rgb(0 0 0 / 0.35);
+  }
+
+  /* the graph stage keeps the plain indigo, lit only by a faint haze from above */
+  .stage-surface {
+    background:
+      radial-gradient(90% 60% at 50% 0%, var(--haze-glow), transparent 70%),
+      var(--umbra-900);
+  }
+}
+
+/* a slow wander, a few percent at most, so the light pools shift without drawing attention */
+@keyframes backdrop-drift {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  }
+  50% {
+    transform: translate3d(-3%, 2%, 0) rotate(4deg) scale(1.05);
+  }
+  100% {
+    transform: translate3d(2%, -2%, 0) rotate(-3deg) scale(1.02);
+  }
+}
+
+/* viewers who prefer reduced motion get the same gradient, standing still */
+@media (prefers-reduced-motion: reduce) {
+  .console-backdrop::before {
+    animation: none;
+  }
+}
+
+/* thin gold-tinted scrollbars instead of the default gray ones */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--umbra-500) transparent;
 }

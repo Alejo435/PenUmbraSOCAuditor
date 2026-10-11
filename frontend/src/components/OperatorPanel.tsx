@@ -238,7 +238,7 @@ export function OperatorPanel() {
 		<aside
 			role="dialog"
 			aria-label="Operator panel"
-			className="fixed right-4 bottom-4 z-50 w-96 rounded-md border bg-umbra-800/95 p-4 shadow-2xl backdrop-blur"
+			className="fixed right-4 bottom-4 z-50 w-96 panel-surface rounded-xl border border-edge p-4 shadow-2xl backdrop-blur"
 		>
 			<div className="mb-3 flex items-center justify-between">
 				<h2 className="text-sm font-medium text-light-100">Operator</h2>
