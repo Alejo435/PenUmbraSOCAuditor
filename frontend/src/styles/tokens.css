@@ -18,6 +18,12 @@
   --ember-glow: rgb(242 113 28 / 0.4);
   --haze-300: #a89e8b;
   --haze-glow: rgb(214 186 140 / 0.06);
+  
+    --edge: color-mix(in oklab, var(--light-100) 10%, transparent);
+  --edge-soft: color-mix(in oklab, black 35%, transparent);
+
+  --surface-top: var(--umbra-800);
+  --surface-bottom: color-mix(in oklab, var(--umbra-800) 80%, black);
   --ep-observed-color: var(--light-100);
   --ep-observed-opacity: 1;
   --ep-observed-dash: none;

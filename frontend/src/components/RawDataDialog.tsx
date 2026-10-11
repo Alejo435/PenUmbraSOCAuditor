@@ -69,7 +69,7 @@ export function RawDataDialog() {
         ref={dialogRef}
         onClose={() => setOpen(false)}
         aria-label="Raw data"
-        className="m-auto max-h-[85vh] w-[min(56rem,90vw)] overflow-auto rounded-md border bg-umbra-800 p-0 text-light-100 backdrop:bg-umbra-900/70"
+        className="m-auto max-h-[85vh] w-[min(56rem,90vw)] overflow-auto panel-surface rounded-xl border border-edge p-0 text-light-100 backdrop:bg-umbra-900/70"
       >
         <div className="sticky top-0 flex items-center justify-between border-b bg-umbra-800 px-4 py-3">
           <h2 className="text-sm font-medium">Raw data</h2>

@@ -13,7 +13,7 @@ type PanelProps = {
 export function Panel({ title, actions, className, children }: PanelProps) {
 	return (
 		<section
-			className={cn("flex min-h-0 min-w-0 flex-col bg-umbra-800", className)}
+			className={cn('panel-surface flex min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-edge', className)}
 		>
 			<header className="flex h-9 shrink-0 items-center justify-between border-b px-3">
 				<h2 className="text-sm font-medium text-penumbra-200">{title}</h2>

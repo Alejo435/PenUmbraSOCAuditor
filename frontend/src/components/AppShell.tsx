@@ -13,25 +13,25 @@ export function AppShell() {
 	useBackendPolling();
 	useAlertSound()
 	return (
-		<div className="grid h-full grid-cols-[20rem_minmax(0,1fr)_22rem] grid-rows-[3rem_minmax(0,1fr)_14rem]">
+		<div className="console-backdrop grid h-full grid-cols-[20rem_minmax(0,1fr)_22rem] grid-rows-[3rem_minmax(0,1fr)_14rem] gap-2 p-2">
 			<Header className="col-span-3" />
-			<Panel title="Event feed" className="border-r">
+			<Panel title="Event feed">
 				<EventFeed />
 			</Panel>
 
 			{/* the graph stage is the darkest surface so lit evidence stands out against it */}
 			<section
-				className="min-h-0 min-w-0 bg-umbra-900"
+				className="stage-surface min-h-0 min-w-0 overflow-hidden rounded-xl border border-edge"
 				aria-label="Threat graph"
 			>
 				<ThreatGraph />
 			</section>
 
-			<Panel title="Inspector" className="border-l">
+			<Panel title="Inspector">
 				<Inspector />
 			</Panel>
 
-			<Panel title="Timeline" className="col-span-3 border-t">
+			<Panel title="Timeline" className="col-span-3">
 				<Timeline />
 			</Panel>
 
