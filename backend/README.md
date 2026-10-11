@@ -7,9 +7,6 @@ A starter REST API for uploading, parsing, filtering, and analyzing the included
 Requires Python 3.10+.
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate        # macOS/Linux
-# .venv\\Scripts\\activate     # Windows
 pip install -r requirements.txt
 python app.py
 ```
