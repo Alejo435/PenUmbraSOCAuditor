@@ -6,10 +6,12 @@ import { Inspector } from "@/components/Inspector";
 import { Timeline } from "@/components/Timeline";
 import { OperatorPanel } from "@/components/OperatorPanel";
 import { useBackendPolling } from "@/lib/usePolling";
+import { useAlertSound } from '@/lib/useAlertSound'
 
 // top-level console layout: header, event feed, graph stage, inspector and timeline
 export function AppShell() {
 	useBackendPolling();
+	useAlertSound()
 	return (
 		<div className="grid h-full grid-cols-[20rem_minmax(0,1fr)_22rem] grid-rows-[3rem_minmax(0,1fr)_14rem]">
 			<Header className="col-span-3" />

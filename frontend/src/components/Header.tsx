@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { RawDataDialog } from "@/components/RawDataDialog";
+import { ReportDialog } from '@/components/ReportDialog'
 import { useConsoleStore } from "@/store";
 import type { StateResponse, StreamStatus } from "@/types";
 
@@ -141,6 +142,7 @@ export function Header({ className }: { className?: string }) {
 				<AnalystStatus />
 				<EventRate rate={eventsPerSecond} />
 				<ScenarioClock day={day} time={time} />
+        <ReportDialog />
 				<RawDataDialog />
 			</div>
 		</header>

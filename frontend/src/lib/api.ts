@@ -1,4 +1,4 @@
-import type { LogEvent, NodeReport, StateResponse } from '@/types'
+import type { FullReport, LogEvent, NodeReport, StateResponse } from '@/types'
 
 // fetch wrapper that parses json and turns http errors into exceptions carrying the server's message
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -23,7 +23,10 @@ export const api = {
   getReports: () => request<NodeReport[]>('/api/reports'),
   start: () => request<{ message: string }>('/api/start', { method: 'POST' }),
   reset: () => request<{ message: string }>('/api/reset', { method: 'POST' }),
-    // sends one raw log line straight into the graph, outside the replay
+  // incident report covering the whole graph. without ai the backend skips gemma and answers at once
+  getFullReport: (ai: boolean) =>
+  request<FullReport>(`/api/full-report${ai ? '' : '?ai=0'}`, { method: 'POST' }),
+  // sends one raw log line straight into the graph, outside the replay
   injectLog: (raw: string) =>
   request<{ message: string }>('/logs', {
     method: 'POST',

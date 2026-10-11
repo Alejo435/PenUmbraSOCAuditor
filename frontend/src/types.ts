@@ -138,3 +138,23 @@ export type NodeReport = {
   error: string | null
   updated_at: string
 }
+
+export type OverallSeverity = 'low' | 'medium' | 'high' | 'critical'
+
+// response of POST /api/full-report
+export type FullReport = {
+  // the whole report as github flavored markdown
+  report: string
+  // who wrote the executive summary
+  source: 'gemma' | 'rules'
+  // why the ai summary failed when the backend fell back to rules, otherwise null
+  error: string | null
+  severity: OverallSeverity
+  // backend wall-clock time as HH:MM:SS
+  generated_at: string
+  // name of the copy the backend saved in its reports folder
+  file: string
+  nodes: number
+  alerts: number
+  ai_reports: number
+}
