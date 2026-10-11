@@ -16,6 +16,36 @@ A visual threat console for security beginners. It replays a log file in real ti
 - **Backend:** Python, Flask, NetworkX
 - **AI:** Gemma-2-2b-it over Tailscale
 
+### Architecture Overview
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        Frontend (React + Vite)                         │
+│ ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐ │
+│ │ React        │  │ Cytoscape.js │  │ TypeScript   │  │ Tailwind CSS │ │
+│ │ Components   │  │ Threat graph │  │ + Zustand    │  │ + shadcn/ui  │ │
+│ └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘ │
+└────────────────────────────────────────────────────────────────────────┘
+                                     │
+                                     ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                          Backend API (Python)                          │
+│ ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐ │
+│ │ Flask        │  │ Converter    │  │ NetworkX     │  │ Report queue │ │
+│ │ REST API     │  │ convert.py   │  │ Graph, rules │  │ 1 per node   │ │
+│ └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘ │
+└────────────────────────────────────────────────────────────────────────┘
+                                     │
+                                     ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                          AI & Services Layer                           │
+│ ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐ │
+│ │ Gemma 2B     │  │ Tailscale    │  │ Rules backup │  │ Token auth   │ │
+│ │ Node reports │  │ VPN link     │  │ Offline mode │  │ Access guard │ │
+│ └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘ │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
 ## Set up the AI server
 
 Only one person needs to do this, on the computer with the GPU. **Everyone else can skip this part.**
