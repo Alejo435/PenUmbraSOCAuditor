@@ -1,4 +1,4 @@
-# PenUmbra SOC Auditor™️- Backendd
+# PenUmbra SOC Auditor™️- Backend
 
 This is the part of our project that does the thinking. It reads security logs, draws a map of what happened, and uses AI to explain it in plain English.
 
