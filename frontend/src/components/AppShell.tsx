@@ -3,7 +3,7 @@ import { Header } from "@/components/Header";
 import { EventFeed } from "@/components/EventFeed";
 import { ThreatGraph } from "@/components/ThreatGraph";
 import { Inspector } from "@/components/Inspector";
-import { Timeline } from "@/components/TImeline";
+import { Timeline } from "@/components/Timeline";
 import { OperatorPanel } from "@/components/OperatorPanel";
 import { useBackendPolling } from "@/lib/usePolling";
 
