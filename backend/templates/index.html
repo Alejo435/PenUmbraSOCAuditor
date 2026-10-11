@@ -193,6 +193,10 @@
             <button id="startButton" onclick="startReplay()">Start replay</button>
             <button class="secondary" onclick="resetReplay()">Reset</button>
             <button class="secondary" onclick="showParsedLogs()">Refresh JSON</button>
+            <button class="secondary" id="fullReportButton" onclick="generateFullReport()">Generate full report</button>
+            <label class="muted" style="display:flex;align-items:center;gap:6px;font-size:13px">
+                <input type="checkbox" id="fullReportAi" checked> AI summary
+            </label>
         </div>
     </header>
 
@@ -265,6 +269,19 @@
                 <div class="feed" id="events"><p class="muted">Waiting for replay...</p></div>
             </div>
         </div>
+    </section>
+
+    <section class="panel" id="fullReportPanel" style="display:none; margin-top:16px">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap">
+            <h2 style="margin:0">Full report</h2>
+            <div class="controls">
+                <button class="secondary" onclick="copyFullReport()">Copy</button>
+                <button class="secondary" onclick="downloadFullReport()">Download .md</button>
+                <button class="secondary" onclick="closeFullReport()">Close</button>
+            </div>
+        </div>
+        <p class="muted" id="fullReportMeta" style="margin:10px 0"></p>
+        <pre id="fullReportBody" style="white-space:pre-wrap; overflow-wrap:anywhere; max-height:600px"></pre>
     </section>
 
     <details>
@@ -627,6 +644,62 @@
             } catch (error) {
                 statusElement.textContent = `Connection error: ${error.message}`;
             }
+        }
+
+        // ---- full report --------------------------------------------------
+        let fullReportText = "";
+        let fullReportFile = "full_report.md";
+
+        async function generateFullReport() {
+            const button = document.getElementById("fullReportButton");
+            const useAi = document.getElementById("fullReportAi").checked;
+            const panel = document.getElementById("fullReportPanel");
+            const meta = document.getElementById("fullReportMeta");
+
+            button.disabled = true;
+            button.textContent = useAi ? "Generating (AI summary)..." : "Generating...";
+
+            try {
+                const data = await api(`/api/full-report?ai=${useAi ? 1 : 0}`, { method: "POST" });
+                fullReportText = data.report;
+                fullReportFile = data.file;
+                panel.style.display = "block";
+                meta.textContent =
+                    `Generated ${data.generated_at} | ${data.nodes} nodes | ${data.alerts} alerts | ` +
+                    `${data.ai_reports} AI node reports | summary by ${data.source === "gemma" ? "Gemma" : "rules"} | ` +
+                    `saved as reports/${data.file}`;
+                document.getElementById("fullReportBody").textContent = data.report;
+                panel.scrollIntoView({ behavior: "smooth", block: "start" });
+            } catch (error) {
+                panel.style.display = "block";
+                meta.textContent = `Could not generate report: ${error.message}`;
+                document.getElementById("fullReportBody").textContent = "";
+            } finally {
+                button.disabled = false;
+                button.textContent = "Generate full report";
+            }
+        }
+
+        async function copyFullReport() {
+            try {
+                await navigator.clipboard.writeText(fullReportText);
+                document.getElementById("fullReportMeta").textContent += " | copied!";
+            } catch (error) {
+                document.getElementById("fullReportMeta").textContent = "Copy failed. Select the text manually.";
+            }
+        }
+
+        function downloadFullReport() {
+            const blob = new Blob([fullReportText], { type: "text/markdown" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = fullReportFile;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        function closeFullReport() {
+            document.getElementById("fullReportPanel").style.display = "none";
         }
 
         async function loop() {

@@ -24,6 +24,8 @@ from ai_analyst import Analyst
 from graph_engine import ThreatGraph
 from convert import convert_log_file_text, normalize_event, parse_timestamp
 from node_reports import NodeReports
+from full_report import generate_full_report
+
 
 app = Flask(__name__)
 
@@ -209,6 +211,18 @@ def api_report(index):
     return jsonify(entry)
 
 
+@app.route("/api/full-report", methods=["POST"])
+def api_full_report():
+    """Full report of every node currently in the graph. Add ?ai=0 to skip the Gemma summary."""
+    use_ai = request.args.get("ai", "1") != "0"
+    with state_lock:
+        clock = replay_status["clock"]
+    result = generate_full_report(graph, reports, reports.analyst, state_lock, clock, use_ai)
+    if result is None:
+        return jsonify({"error": "No nodes in the graph yet. Start the replay first."}), 400
+    return jsonify(result)
+
+
 # ------------------------------------------------------------- live log API
 @app.route("/logs", methods=["GET"])
 def get_logs():
@@ -246,7 +260,7 @@ def main():
     parsed_logs = events
     replay_status.update({"file": str(path), "total": len(parsed_logs), "clock": START_CLOCK})
 
-    port = int(os.getenv("PORT", "5000"))
+    port = int(os.getenv("PORT", "5001"))
     print(f"Loaded {len(parsed_logs)} events from {path}")
     print(f"AI reports: {reports.analyst.mode}")
     print(f"Open http://127.0.0.1:{port} in your browser.")
